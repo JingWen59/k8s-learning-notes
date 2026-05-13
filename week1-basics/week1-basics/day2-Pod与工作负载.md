@@ -160,6 +160,19 @@ kubectl delete pod $(kubectl get pods -l app=deploy-test -o name | head -1)
 kubectl get pods
 # → 自动重建了 ✅
 
+发生了什么？
+
+text
+你删除了 Pod (xxxxx-yyyyy)
+        ↓
+Deployment 控制器发现："期望有 1 个 Pod，现在只有 0 个"
+        ↓
+Deployment 控制器："必须补到 1 个！"
+        ↓
+Deployment 控制器创建新 Pod (zzzzz-wwwww)
+        ↓
+新 Pod 启动，服务恢复 ✅
+
 # 清理
 kubectl delete deployment deploy-test
 ```
@@ -907,6 +920,26 @@ kubectl describe pod → 看 Events
 kubectl logs --previous → 看崩溃前的日志
 常见原因：命令错误、配置错误、依赖没启动、OOM
 ```
+补充：
+看到 CrashLoopBackOff
+       ↓
+[第1步] kubectl describe pod
+       ↓
+   Events 有什么？
+    ├─ 拉取镜像失败 → ImagePullBackOff（另一类问题）
+    ├─ 内存不足 → OOMKilled
+    └─ 正常拉取、创建、但退出 → 进入第2步
+       ↓
+[第2步] kubectl logs --previous
+       ↓
+   有输出？
+    ├─ 有 → 看报错信息，修复
+    └─ 无 → 命令本身没有输出，可能是 exit 1 类
+       ↓
+[第3步] 检查命令/配置
+    ├─ 手动运行命令测试
+    ├─ 检查配置文件
+    └─ 检查依赖服务
 
 ### Q8: 为什么不用裸 Pod？
 
@@ -925,12 +958,46 @@ Deployment 有自愈、滚动更新、回滚、扩缩容
 ### Q10: StatefulSet 为什么需要 Headless Service？
 
 ```
+因为 StatefulSet 的 Pod 需要稳定的网络标识（hostname），只有 Headless Service 才能给每个 Pod 注册独立的 DNS 记录。
+
 给每个 Pod 提供固定 DNS：
   pod名.service名.namespace.svc.cluster.local
 普通 Service 只有一个 ClusterIP（无法区分具体 Pod）
 Headless（ClusterIP=None）直接解析到每个 Pod IP
 ```
-
+补充：
+图解总结
+普通 Service（ClusterIP）
+text
+┌─────────────────────────────────────────┐
+│  web-svc (ClusterIP: 10.96.0.1)        │
+│  "你打我，我把你转给随机一个 Pod"        │
+└─────────────────────────────────────────┘
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+      web-0      web-1      web-2
+     (IP a)     (IP b)     (IP c)
+     
+     你无法指定找 web-1 还是 web-2
+Headless Service（ClusterIP: None）
+text
+┌─────────────────────────────────────────┐
+│  web-svc (Headless)                    │
+│  "我公布所有 Pod 的通讯录"               │
+└─────────────────────────────────────────┘
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+      web-0      web-1      web-2
+   (IP a)      (IP b)     (IP c)
+   ↑           ↑          ↑
+   │           │          │
+   DNS:        DNS:       DNS:
+   web-0.web-svc  web-1.web-svc  web-2.web-svc
+   → IP a        → IP b         → IP c
+   
+   你可以精确访问 web-1！
 ---
 
 ## 🎯 精简速记版（考前 1 分钟）
