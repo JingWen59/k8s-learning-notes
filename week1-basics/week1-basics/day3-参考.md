@@ -647,10 +647,20 @@ kubectl delete deployment web
 kubectl delete svc web-svc web-nodeport web-headless
 ```
 
+[root@k8s-master1 ~]# kubectl run dns-test --image=busybox:1.28 --rm -it -- sh If you don't see a command prompt, try pressing enter. / # nslookup web-svc Server: 10.96.0.10 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local Name: web-svc Address 1: 10.96.238.46 web-svc.default.svc.cluster.local / # nslookup web-headless Server: 10.96.0.10 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local Name: web-headless Address 1: 10.244.194.73 10-244-194-73.web-svc.default.svc.cluster.local Address 2: 10.244.194.68 10-244-194-68.web-svc.default.svc.cluster.local Address 3: 10.244.194.88 10-244-194-88.web-svc.default.svc.cluster.local
+
+结果对比
+	普通 Service (web-svc)	Headless Service (web-headless)
+ClusterIP	10.96.238.46	None
+DNS 解析结果	1 个 ClusterIP	3 个 Pod IP
+负载均衡	kube-proxy (iptables) 做	客户端自己选（或靠 DNS 轮询）
+
+
+
 **✍️ 记录：**
-- 普通 Service DNS 解析结果：__________
-- Headless Service DNS 解析结果：__________
-- Headless 的使用场景：__________
+- 普通 Service DNS 解析结果：_返回 1 个 ClusterIP 10.96.238.46_________
+- Headless Service DNS 解析结果：_返回 3 个 Pod IP 10.244.194.73、10.244.194.68、10.244.194.88_________
+- Headless 的使用场景：__StatefulSet（如 MySQL/Redis/Kafka 需要固定 Pod DNS 名）、gRPC 长连接（客户端需知道所有后端 IP 自行负载均衡）、服务发现（应用需获取所有实例地址）________
 
 ---
 
@@ -699,7 +709,7 @@ IPVS：大规模集群用，支持更多负载均衡算法，性能好
 ### Q6: Headless Service 是什么？和普通 Service 区别？
 
 ```
-Headless：ClusterIP=None
+Headless：ClusterIP=None(没有ClusterIP)
 普通 Service DNS → 解析到 1 个 ClusterIP
 Headless DNS → 直接解析到所有 Pod IP
 
