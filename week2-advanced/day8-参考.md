@@ -761,8 +761,8 @@ K8s 监控：node-exporter(节点) + kube-state-metrics(资源) + cAdvisor(容�
 ☐ 2. Pull 和 Push 模型的区别和使用场景？
 ☐ 3. node-exporter / kube-state-metrics / cAdvisor 各自采集什么？
 ☐ 4. PromQL 4 种数据类型？
-☐ 5. rate() 和 irate() 区别？
-☐ 6. Counter / Gauge / Histogram / Summary 各自适合什么？
+☐ *5. rate() 和 irate() 区别？
+☐ *6. Counter / Gauge / Histogram / Summary 各自适合什么？
 ☐ 7. 写一个查询：所有节点 CPU 使用率
 ☐ 8. Alertmanager 的 4 个核心功能？
 ☐ 9. 怎么监控自己写的应用？
