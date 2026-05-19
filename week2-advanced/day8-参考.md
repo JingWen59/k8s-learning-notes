@@ -591,6 +591,13 @@ K8s 集群指标来源：
   - kube-state-metrics：K8s 资源状态（Deployment 副本数、Pod 状态等）
   - cAdvisor：容器指标（kubelet 内置）
   - kubelet：节点自身指标
+
+  Node Exporter 告诉你：“机器哪里不舒服”（磁盘I/O高、网络丢包）。
+
+kube-state-metrics 告诉你：“调度器在干什么”（Pod待调度、副本数不足）。
+
+cAdvisor 告诉你：“哪个容器在捣乱”（这个Pod内存超标）。
+
 ```
 
 ### Q2: Prometheus 的服务发现机制？
