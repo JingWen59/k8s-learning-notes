@@ -342,7 +342,9 @@ curl -H "Host: httpd.test.com" http://192.168.105.128:30080
 **✍️ 记录：**
 - nginx.test.com 返回：_Welcome to nginx! (Nginx 欢迎页)_________
 - httpd.test.com 返回：_It works! Apache httpd (Apache httpd 测试页)_________
-- 同一端口不同域名如何区分：_通过 HTTP 请求头中的 Host 字段（域名）进行区分，Ingress Controller 根据 Host 规则将请求路由到不同的后端服务
+- 同一端口不同域名如何区分：
+
+通过 HTTP 请求头中的 Host 字段（域名）进行区分，Ingress Controller 根据 Host 规则将请求路由到不同的后端服务
 
  Ingress 的核心功能——基于域名的虚拟主机
 

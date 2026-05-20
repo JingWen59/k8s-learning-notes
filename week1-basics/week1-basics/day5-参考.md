@@ -156,8 +156,9 @@ kubectl delete configmap app-config file-config demo-config
 ```
 
 **✍️ 记录：**
-- 3 种创建方式：__________
-- 环境变量 vs 文件挂载区别：__________
+- 3 种创建方式：_--from-literal、--from-file、YAML 声明式_________
+- 环境变量 vs 文件挂载区别：环境变量：重启 Pod 才生效
+文件挂载：自动更新，但应用需重载__________
 - 热更新：文件可以，环境变量不行
 
 ---
@@ -265,9 +266,9 @@ kubectl delete secret db-secret app-secret
 ```
 
 **✍️ 记录：**
-- Secret 和 ConfigMap 核心区别：__________
-- Base64 是加密吗：__________
-- imagePullSecrets 什么时候用：__________
+- Secret 和 ConfigMap 核心区别：__Secret 存敏感数据（密码、Token），ConfigMap 存普通配置（端口、环境变量）。Secret 有 Base64 编码（防肉眼直接看），ConfigMap 明文。________
+- Base64 是加密吗：_ 不是，只是编码，任何人都能解码（base64 -d）_________
+- imagePullSecrets 什么时候用：Pod 需要从私有镜像仓库（如 Harbor、私有 Docker Hub）拉取镜像时使用__________
 
 ---
 
@@ -360,6 +361,8 @@ kubectl apply -f /root/yaml/config/rbac.yaml
 kubectl auth can-i get pods --as=system:serviceaccount:default:pod-viewer
 # yes ✅
 
+# 执行了一个 RBAC（基于角色的访问控制）配置，创建了三个资源，最终让 pod-viewer 这个服务账号（ServiceAccount）拥有了查看 Pod 的权限。
+
 # 用 pod-viewer 身份删除 Pod（应该不能）
 kubectl auth can-i delete pods --as=system:serviceaccount:default:pod-viewer
 # no ✅
@@ -371,10 +374,12 @@ kubectl auth can-i get deployments --as=system:serviceaccount:default:pod-viewer
 # 3.3 查看集群内置的 ClusterRole
 kubectl get clusterrole | head -20
 # admin / cluster-admin / edit / view 等
+# ClusterRole 是集群级别的角色，可以跨所有命名空间生效
 
 # 查看 cluster-admin 有什么权限
 kubectl describe clusterrole cluster-admin
 # 所有资源的所有操作 → 超级管理员
+# 这个输出显示的是 cluster-admin 这个集群角色的权限定义，可以看到它拥有 最高级别的权限。
 
 # 3.4 查看 view 角色权限
 kubectl describe clusterrole view
@@ -384,10 +389,42 @@ kubectl describe clusterrole view
 kubectl delete -f /root/yaml/config/rbac.yaml
 ```
 
+简单来说，就是给某个账号分配权限：
+
+创建身份：pod-viewer（一个服务账号）
+
+定义规则：pod-reader（只能 get/list/watch Pod，不能删也不能动别的）
+
+绑定：把身份和规则绑一起
+
+最终效果：pod-viewer 这个账号只能看 Pod，不能删 Pod，也不能看 Deployment。
+
+后面看 cluster-admin 和 view 是为了对比：
+
+cluster-admin：超级管理员，啥都能干
+
+view：只读账号，跟你刚建的 pod-viewer 类似
+
 **✍️ 记录：**
-- Role vs ClusterRole 区别：__________
-- RBAC 三要素：__________
-- 内置角色有哪些：__________
+- Role vs ClusterRole 区别：
+
+Role 只在单个命名空间内生效；
+
+ClusterRole 在整个集群级别生效（可访问集群资源如 Node、CRD，或跨命名空间访问）。
+
+- RBAC 三要素：
+
+Subject（主体）：谁要操作（User、Group、ServiceAccount）
+Role/ClusterRole（角色）：能做什么（定义操作权限，如 get pod）
+RoleBinding/ClusterRoleBinding（绑定）：把主体和角色绑在一起
+
+
+- 内置角色有哪些：
+
+cluster-admin：集群超级管理员（最高权限）
+admin：命名空间管理员（可管理命名空间内大多数资源及 RBAC）
+edit：命名空间内可读写（修改资源，但不能改 RBAC 权限）
+view：命名空间内只读（不能看 Secret）
 
 ---
 
@@ -440,6 +477,14 @@ kubectl logs sa-pod
 # 4.3 查看 Pod 里自动挂载的 SA Token
 kubectl exec sa-pod -- ls /var/run/secrets/kubernetes.io/serviceaccount/
 # ca.crt  namespace  token
+
+
+每个 Pod 都有一个“身份证”（ServiceAccount），K8s 通过这个身份证上的 Token 来识别 Pod 的身份，并配合 RBAC 决定它能做什么（比如访问 API）。
+
+4.1：K8s 会给每个命名空间自动创建一个默认的“身份证”（default ServiceAccount）。
+
+4.2 & 4.3：你可以在 Pod 里指定使用一个自定义的“身份证”（my-app-sa），K8s 会自动把这张“身份证”（Token 文件）挂载进 Pod 里，Pod 里的程序就可以拿着它去跟 K8s API 证明“我是谁”了。
+
 
 # 清理
 kubectl delete pod sa-pod
@@ -512,8 +557,8 @@ kubectl delete networkpolicy backend-policy
 ```
 
 **✍️ 记录：**
-- NetworkPolicy 默认行为：__________
-- 配置后效果：__________
+- NetworkPolicy 默认行为：_默认允许所有_________
+- 配置后效果：__按规则放行，拒绝其他________
 
 ---
 
