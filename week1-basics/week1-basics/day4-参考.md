@@ -821,6 +821,17 @@ mysql-1 永远是 slave，数据在 data-mysql-1
 数据库：StatefulSet + PVC + 定期备份
 ```
 
+### Q11: PV (PersistentVolume) 的存储系统包括哪些类型
+
+本地存储	hostPath、local	
+    hostPath：直接挂载节点上的目录（仅测试用）
+    local：挂载节点上的磁盘或分区（生产可用）。对读写延迟要求极高的高性能数据库或缓存系统。
+网络文件系统	
+    NFS	通过网络共享文件，支持多节点同时读写 (RWX)
+    需要多Pod共享文件的场景，如文件存储、内容管理系统。
+云存储/块存储	
+    AWS EBS、GCE PD、Azure Disk、Ceph RBD 等
+
 ---
 
 ## 🎯 速记版（考前 1 分钟）

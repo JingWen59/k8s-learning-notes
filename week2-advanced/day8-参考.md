@@ -764,7 +764,7 @@ K8s 监控：node-exporter(节点) + kube-state-metrics(资源) + cAdvisor(容�
 ## 📊 自测清单
 
 ```
-☐ 1. Prometheus 5 大组件？
+☐ 1. Prometheus 5 大组件？    
 ☐ 2. Pull 和 Push 模型的区别和使用场景？
 ☐ 3. node-exporter / kube-state-metrics / cAdvisor 各自采集什么？
 ☐ 4. PromQL 4 种数据类型？

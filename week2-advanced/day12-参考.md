@@ -557,6 +557,20 @@ df -h             → 看磁盘
 free -m           → 看内存
 ```
 
+
+### 记一下
+Service 不通 → 
+检查 Endpoints → 检查 selector 匹配
+
+DNS 不通    → 
+检查 CoreDNS Pod 状态和日志
+
+Pod 互不通  → 
+检查 CNI 插件（Calico）状态
+
+NodePort 不通 → 
+检查 kube-proxy + iptables 规则
+
 ---
 
 ## 🎯 速记版（考前 1 分钟）
